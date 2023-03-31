@@ -1,0 +1,105 @@
+- hosts: nodo1
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Add repo postgresql
+      become: yes
+      become_user: root
+      shell: "dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+
+    - name: Import the repository signing key
+      become: yes
+      become_user: root
+      shell: "dnf -qy module disable postgresql"
+      args:
+        warn: false
+
+    - name: Install Postgresql 13
+      become: yes
+      become_user: root
+      ansible.builtin.yum:
+       name: postgresql13-server
+
+    - name: Make sure a service unit is running
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: stopped
+        name: postgresql-13
+        enabled: false
+
+    - name: Create data directory
+      become: yes
+      become_user: root
+      file:
+        path: "{{path_postgres_data}}"
+        state: directory
+
+    - name: Create wal directory
+      become: yes
+      become_user: root
+      file:
+        path: "{{path_postgres_wal}}"
+        state: directory
+
+    - name: Change postgres base permission
+      become: yes
+      file:
+        path: "{{path_postgres_base}}"
+        recurse: yes
+        owner: postgres
+        group: postgres
+
+    - name: Iniciar Cluster
+      become: yes
+      become_user: postgres
+      command: "/usr/pgsql-13/bin/initdb -D {{path_postgres_data}} -A trust"
+
+    - name: Start Cluster
+      become: yes
+      become_user: postgres
+      command: "/usr/pgsql-13/bin/pg_ctl -D {{path_postgres_data}} -l {{path_postgres_base}}/postgres.log start"
+
+    - name: Change password user postgres OS
+      become: yes
+      user:
+        name: postgres
+        update_password: always
+        password: "{{ passwd_postgres_os|password_hash('sha512') }}"
+
+    - name: Create user keycloak
+      become: yes
+      become_user: postgres
+      command: psql -c "create user keycloak with password '{{passwd_userdb_keycloak}}';"
+
+    - name: Create database keycloak
+      become: yes
+      become_user: postgres
+      command: psql -c "CREATE DATABASE keycloak WITH OWNER = keycloak;"
+
+    - name: Create schema keycloak
+      become: yes
+      become_user: postgres
+      command: psql -d keycloak -c "create schema authorization keycloak;"
+
+    - name: Update postgresql.conf
+      become: yes
+      become_user: postgres
+      blockinfile:
+        path: "{{path_postgres_data}}/postgresql.conf"
+        block: |
+          listen_addresses = '*'
+
+    - name: Update pg_hba.conf
+      become: yes
+      become_user: postgres
+      replace:
+        path: "{{path_postgres_data}}/pg_hba.conf"
+        regexp: "host    all             all             127.0.0.1/32            trust"
+        replace: "host    all             all             0.0.0.0/0            trust"
+
+    - name: restart Cluster
+      become: yes
+      become_user: postgres
+      command: "/usr/pgsql-13/bin/pg_ctl -D {{path_postgres_data}} -l {{path_postgres_base}}/postgres.log restart"        

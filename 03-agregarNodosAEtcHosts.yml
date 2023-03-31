@@ -1,0 +1,14 @@
+- hosts: all
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Se agregan los nombres de los servidores al archivo /etc/hosts
+      become: yes
+      become_user: root
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          {{ ip_nodo1 }} {{ hostname_nodo1 }}
+          {{ ip_nodo2 }} {{ hostname_nodo2 }}
+          {{ ip_nodo3 }} {{ hostname_nodo3 }}

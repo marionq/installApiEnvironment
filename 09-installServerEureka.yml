@@ -1,0 +1,65 @@
+- hosts: nodo3
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Create eureka service
+      become: yes
+      become_user: root
+      file:
+        path: "/etc/systemd/system/server-eureka.service"
+        state: touch
+
+    - name: Update eureka service
+      become: yes
+      become_user: root
+      blockinfile:
+        path: "/etc/systemd/system/server-eureka.service"
+        block: |
+          [Unit]
+          Description=Manage eureka service
+
+          [Service]
+          WorkingDirectory=/u01/eureka
+          ExecStart=java -jar -DPORT=5601 /u01/eureka/server-eureka-0.0.1.jar
+          User=jvmapps
+          Type=simple
+          Restart=on-failure
+          RestartSec=10
+
+    - name: Create eureka directory
+      become: yes
+      become_user: root
+      file:
+        path: "/u01/eureka"
+        state: directory
+
+    - name: Copy Server Eureka
+      become: yes
+      become_user: root
+      ansible.builtin.copy:
+        src: "{{ path_base_servers }}/{{ path_sever_eureka}}/server-eureka-0.0.1.jar"
+        dest: "/u01/eureka"
+        owner: jvmapps
+        group: appmgr
+
+    - name: Change eureka path permission
+      become: yes
+      file:
+        path: "/u01/eureka"
+        recurse: yes
+        owner: jvmapps
+        group: appmgr        
+
+    - name: apt reload deamon
+      become: yes
+      become_user: root
+      shell: "systemctl daemon-reload"
+
+    - name: Start zipkin service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: started
+        name: server-eureka.service
+        enabled: true

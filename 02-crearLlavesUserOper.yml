@@ -1,0 +1,17 @@
+- hosts: all
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Generate an ssh keypair with the default values (4096 bits, rsa) and encrypted private key
+      become: yes
+      become_user:  jenkins
+      command: "ssh-keygen -t rsa -f /home/jenkins/.ssh/id_rsa -P \"\""
+
+    - name: Store file into Jenkins directory
+      become: yes
+      become_user: jenkins
+      fetch:
+        src: ~/.ssh/id_rsa.pub
+        dest: ~/ansible/playbooks/installApiEnvironment/sshKeys/jenkins/id_rsa.pub-{{inventory_hostname}}
+        flat: yes

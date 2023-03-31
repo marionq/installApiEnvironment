@@ -1,0 +1,41 @@
+---
+packages:
+  - jdk-11.0.17_linux-x64_bin.rpm
+  - hadoop-3.3.4.tar.gz
+  - apache-zookeeper-3.8.1.tar.gz
+
+ip_nodo1: 172.25.254.81
+ip_nodo2: 172.25.254.82
+ip_nodo3: 172.25.254.83
+
+hostname_nodo1: apis01
+hostname_nodo2: apis02
+hostname_nodo3: apis03
+
+path_postgres_base: /u01/postgres-13
+path_postgres_data: /u01/postgres-13/data
+path_postgres_wal: /u01/postgres-13/wal
+path_openldap: /u01/openldap
+
+path_keycloak: /u01/keycloak
+path_zipkin: /u01/zipkin
+path_eureka: /u01/eureka
+
+path_base_servers: /home/administrator/mavenProjects/AutofinParent/servers
+path_sever_eureka: server-eureka/target
+path_server_admin: server-admin/target
+path_server_config: server-config/target
+path_server_zuul: server-zuul/target
+
+path_base_apis: /home/administrator/mavenProjects/AutofinParent/apis
+path_api_keycloak: api-keycloak/target
+path_api_ldap: api-ldap/target
+path_api_sender-mail: sender-mail/target
+
+passwd_postgres_os: Fatguys8
+passwd_usldap_os: Fatguys8
+passwd_userdb_keycloak: Fatguys8
+passwd_users_keycloak: Fatguys8
+user_keycloak: admin
+passwd_user_keycloak: Fatguys8
+passwwd_user_jvmapps: Fatguys8

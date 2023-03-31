@@ -1,0 +1,65 @@
+- hosts: nodo3
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Create server-config service
+      become: yes
+      become_user: root
+      file:
+        path: "/etc/systemd/system/server-config.service"
+        state: touch
+
+    - name: Update server-config service
+      become: yes
+      become_user: root
+      blockinfile:
+        path: "/etc/systemd/system/server-config.service"
+        block: |
+          [Unit]
+          Description=Manage server config service
+
+          [Service]
+          WorkingDirectory=/u01/server-config
+          ExecStart=java -jar -DPORT=5432 -DEUREKA_SERVER=http://localhost:5601/eureka /u01/server-config/server-config-0.0.1.jar
+          User=jvmapps
+          Type=simple
+          Restart=on-failure
+          RestartSec=10
+
+    - name: Create server-config directory
+      become: yes
+      become_user: root
+      file:
+        path: "/u01/server-config"
+        state: directory
+
+    - name: Copy server-config
+      become: yes
+      become_user: root
+      ansible.builtin.copy:
+        src: "{{ path_base_servers }}/{{ path_server_config }}/server-config-0.0.1.jar"
+        dest: "/u01/server-config"
+        owner: jvmapps
+        group: appmgr
+
+    - name: Change server-config path permission
+      become: yes
+      file:
+        path: "/u01/server-config"
+        recurse: yes
+        owner: jvmapps
+        group: appmgr        
+
+    - name: apt reload deamon
+      become: yes
+      become_user: root
+      shell: "systemctl daemon-reload"
+
+    - name: Start /u01/server-config service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: started
+        name: server-config.service
+        enabled: true

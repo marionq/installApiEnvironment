@@ -1,0 +1,14 @@
+[all]
+apis01:9081
+apis02:9082
+apis03:9083
+
+[nodo1]
+apis01:9081
+
+[nodo2]
+apis02:9082
+
+[nodo3]
+apis03:9083
+

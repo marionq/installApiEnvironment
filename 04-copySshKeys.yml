@@ -1,0 +1,26 @@
+- hosts: all
+  vars_files:
+    - varsInstallApiEnv.yml
+  vars:
+     contents01: "{{ lookup('file', '/var/lib/jenkins/ansible/playbooks/installApiEnvironment/sshKeys/jenkins/id_rsa.pub-apis01') }}"
+     contents02: "{{ lookup('file', '/var/lib/jenkins/ansible/playbooks/installApiEnvironment/sshKeys/jenkins/id_rsa.pub-apis02') }}"
+     contents03: "{{ lookup('file', '/var/lib/jenkins/ansible/playbooks/installApiEnvironment/sshKeys/jenkins/id_rsa.pub-apis03') }}"
+  tasks:
+
+    - name: Create authorized_keys
+      become: yes
+      become_user: jenkins
+      file:
+        path: ~/.ssh/authorized_keys
+        state: touch
+        mode: u=rw
+
+    - name: Set pub_key on authorized_keys
+      become: yes
+      become_user: jenkins
+      blockinfile:
+        path: ~/.ssh/authorized_keys
+        block: |
+          {{ contents01 }}
+          {{ contents02 }}
+          {{ contents03 }}          

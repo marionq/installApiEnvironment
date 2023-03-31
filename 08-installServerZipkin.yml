@@ -1,0 +1,82 @@
+- hosts: nodo3
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Add Group appmgr
+      become: yes
+      become_user: root
+      group:
+        name: appmgr
+        state: present
+
+    - name: Add jvmapps user
+      become: yes
+      become_user: root
+      user:
+        name: jvmapps
+        create_home: no
+        groups: appmgr
+        comment: User jvmapps
+        password: "{{ passwwd_user_jvmapps | password_hash('sha512') }}"
+
+    - name: Create zipkin service
+      become: yes
+      become_user: root
+      file:
+        path: "/etc/systemd/system/server-zipkin.service"
+        state: touch
+
+    - name: Update zipkin service
+      become: yes
+      become_user: root
+      blockinfile:
+        path: "/etc/systemd/system/server-zipkin.service"
+        block: |
+          [Unit]
+          Description=Manage zipkin service
+
+          [Service]
+          WorkingDirectory=/u01/zipkin
+          ExecStart=java -jar /u01/zipkin/zipkin-server-2.23.16-exec.jar
+          User=jvmapps
+          Type=simple
+          Restart=on-failure
+          RestartSec=10
+
+    - name: Create zipkin directory
+      become: yes
+      become_user: root
+      file:
+        path: "{{path_zipkin}}"
+        state: directory
+
+    - name: Copy Server Zipkin
+      become: yes
+      become_user: root
+      ansible.builtin.copy:
+        src: /var/www/html/repo/zipkin-server-2.23.16-exec.jar
+        dest: "{{path_zipkin}}"
+        owner: jvmapps
+        group: appmgr
+
+    - name: Change zipkin path permission
+      become: yes
+      file:
+        path: "{{path_zipkin}}"
+        recurse: yes
+        owner: jvmapps
+        group: appmgr        
+
+    - name: apt reload deamon
+      become: yes
+      become_user: root
+      shell: "systemctl daemon-reload"
+
+    - name: Start zipkin service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: started
+        name: server-zipkin
+        enabled: true

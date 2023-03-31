@@ -1,0 +1,65 @@
+- hosts: nodo3
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Create server-admin service
+      become: yes
+      become_user: root
+      file:
+        path: "/etc/systemd/system/server-admin.service"
+        state: touch
+
+    - name: Update server-admin service
+      become: yes
+      become_user: root
+      blockinfile:
+        path: "/etc/systemd/system/server-admin.service"
+        block: |
+          [Unit]
+          Description=Manage server admin service
+
+          [Service]
+          WorkingDirectory=/u01/server-admin
+          ExecStart=java -jar -DPORT=8080 -DEUREKA_SERVER=http://localhost:5601/eureka /u01/server-admin/server-admin-0.0.1.jar
+          User=jvmapps
+          Type=simple
+          Restart=on-failure
+          RestartSec=10
+
+    - name: Create server-zuul directory
+      become: yes
+      become_user: root
+      file:
+        path: "/u01/server-admin"
+        state: directory
+
+    - name: Copy server-admin
+      become: yes
+      become_user: root
+      ansible.builtin.copy:
+        src: "{{ path_base_servers }}/{{ path_server_admin }}/server-admin-0.0.1.jar"
+        dest: "/u01/server-admin"
+        owner: jvmapps
+        group: appmgr
+
+    - name: Change server-zuul path permission
+      become: yes
+      file:
+        path: "/u01/server-admin"
+        recurse: yes
+        owner: jvmapps
+        group: appmgr        
+
+    - name: apt reload deamon
+      become: yes
+      become_user: root
+      shell: "systemctl daemon-reload"
+
+    - name: Start /u01/server-zuul service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: started
+        name: server-admin.service
+        enabled: true

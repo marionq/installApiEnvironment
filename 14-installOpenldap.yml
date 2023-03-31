@@ -1,0 +1,46 @@
+- hosts: nodo1
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Add usldap user
+      become: yes
+      become_user: root
+      user:
+        name: usldap
+        create_home: yes
+        comment: User Keycloak
+        password: "{{  passwd_usldap_os | password_hash('sha512') }}"
+
+    - name: Create keycloak directory
+      become: yes
+      become_user: root
+      file:
+        path: "{{path_openldap}}"
+        state: directory
+
+    - name: Change openldap base permission
+      become: yes
+      become_user: root
+      file:
+        path: "{{path_openldap}}"
+        recurse: yes
+        owner: usldap
+        group: usldap
+
+    - name: Copy file with owner and permissions
+      become: yes
+      become_user: usldap
+      ansible.builtin.copy:
+        src: /var/www/html/repo/openldap_mov.tar.gz
+        dest: "{{path_openldap}}"
+        owner: usldap
+        group: usldap
+
+    - name: Unzip ldap installation
+      become: yes
+      become_user: usldap
+      unarchive:
+        src: "{{path_openldap}}/openldap_mov.tar.gz"
+        dest: "{{path_openldap}}"
+        copy: no

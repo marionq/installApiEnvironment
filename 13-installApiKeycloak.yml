@@ -1,0 +1,88 @@
+- hosts: nodo2
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Install Openjdk
+      become: yes
+      become_user: root
+      ansible.builtin.yum:
+       name: java-11-openjdk
+
+    - name: Add Group appmgr
+      become: yes
+      become_user: root
+      group:
+        name: appmgr
+        state: present
+
+    - name: Add jvmapps user
+      become: yes
+      become_user: root
+      user:
+        name: jvmapps
+        create_home: no
+        groups: appmgr
+        comment: User jvmapps
+        password: "{{ passwwd_user_jvmapps | password_hash('sha512') }}"
+
+    - name: Create api-keycloak service
+      become: yes
+      become_user: root
+      file:
+        path: "/etc/systemd/system/api-keycloak.service"
+        state: touch
+
+    - name: Update api-keycloak service
+      become: yes
+      become_user: root
+      blockinfile:
+        path: "/etc/systemd/system/api-keycloak.service"
+        block: |
+          [Unit]
+          Description=Manage api-keycloak service
+
+          [Service]
+          WorkingDirectory=/u01/api-keycloak
+          ExecStart=java -jar -DPROFILE=apikeycloakambientecele -DEUREKA_SERVER=http://172.25.254.83:5601/eureka /u01/api-keycloak/api-keycloak-0.0.1.jar
+          User=jvmapps
+          Type=simple
+          Restart=on-failure
+          RestartSec=10
+
+    - name: Create api-keycloak directory
+      become: yes
+      become_user: root
+      file:
+        path: "/u01/api-keycloak"
+        state: directory
+
+    - name: Copy Server api-keycloak
+      become: yes
+      become_user: root
+      ansible.builtin.copy:
+        src: "{{ path_base_apis }}/{{ path_api_keycloak }}/api-keycloak-0.0.1.jar"
+        dest: "/u01/api-keycloak"
+        owner: jvmapps
+        group: appmgr
+
+    - name: Change api-keycloak path permission
+      become: yes
+      file:
+        path: "/u01/api-keycloak"
+        recurse: yes
+        owner: jvmapps
+        group: appmgr        
+
+    - name: apt reload deamon
+      become: yes
+      become_user: root
+      shell: "systemctl daemon-reload"
+
+    - name: Start api-keycloak service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: started
+        name: api-keycloak
+        enabled: true

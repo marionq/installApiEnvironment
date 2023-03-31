@@ -1,0 +1,107 @@
+- hosts: nodo1
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Add keycloak user
+      become: yes
+      become_user: root
+      user:
+        name: keycloak
+        create_home: yes
+        comment: User Keycloak
+        password: "{{  passwd_users_keycloak | password_hash('sha512') }}"
+
+    - name: Create keycloak directory
+      become: yes
+      become_user: root
+      file:
+        path: "{{path_keycloak}}"
+        state: directory
+
+    - name: Change keycloak base permission
+      become: yes
+      become_user: root
+      file:
+        path: "{{path_keycloak}}"
+        recurse: yes
+        owner: keycloak
+        group: keycloak
+
+    - name: Copy file with owner and permissions
+      become: yes
+      become_user: keycloak
+      ansible.builtin.copy:
+        src: /var/www/html/repo/keycloak-15.0.2.zip
+        dest: "{{path_keycloak}}"
+        owner: keycloak
+        group: keycloak
+
+    - name: Unzip keycloak installation
+      become: yes
+      become_user: keycloak
+      unarchive:
+        src: "{{path_keycloak}}/keycloak-15.0.2.zip"
+        dest: "{{path_keycloak}}"
+        copy: no
+
+    - name: Install Openjdk
+      become: yes
+      become_user: root
+      ansible.builtin.yum:
+       name: java-11-openjdk
+
+    - name: Touch a file, using symbolic modes to set the permissions (equivalent to 0774)
+      become: yes
+      become_user: root
+      ansible.builtin.file:
+        path: "{{path_keycloak}}/keycloak-15.0.2/bin/"
+        recurse: yes
+        mode: u=rwx,g=r,o=r
+
+    - name: Create admin user Keycloak
+      become: yes
+      become_user: root
+      shell: "{{ path_keycloak }}/keycloak-15.0.2/bin/add-user-keycloak.sh -u {{ user_keycloak }} -p {{ passwd_user_keycloak }}"
+
+    - name: Create keycloak service
+      become: yes
+      become_user: root
+      file:
+        path: "/etc/systemd/system/keycloak.service"
+        state: touch
+
+    - name: Update api-keycloak service
+      become: yes
+      become_user: root
+      blockinfile:
+        path: "/etc/systemd/system/keycloak.service"
+        block: |
+          [Unit]
+          Description=Manage keycloak service
+
+          [Service]
+          WorkingDirectory={{ path_keycloak }}/keycloak-15.0.2/bin
+          ExecStart={{ path_keycloak }}/keycloak-15.0.2/bin/standalone.sh -b {{ ip_nodo1 }}
+          User=keycloak
+          Type=simple
+          Restart=on-failure
+          RestartSec=10
+
+    - name: apt reload deamon
+      become: yes
+      become_user: root
+      shell: "systemctl daemon-reload"
+
+    - name: Start keycloak service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: started
+        name: keycloak
+        enabled: true
+
+    - name: Create admin user Keycloak
+      become: yes
+      become_user: keycloak
+      shell: "nohup {{ path_keycloak }}/keycloak-15.0.2/bin/standalone.sh -b {{ ip_nodo1 }}&"
