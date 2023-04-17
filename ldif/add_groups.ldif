@@ -1,0 +1,19 @@
+dn: cn=Manager,dc=autofin,dc=com,dc=mx
+objectClass: organizationalRole
+cn: Manager
+
+dn: ou=Applications,dc=autofin,dc=com,dc=mx
+objectClass: organizationalUnit
+objectClass: top
+ou: Applications
+
+dn: ou=Groups,dc=autofin,dc=com,dc=mx
+objectClass: organizationalUnit
+objectClass: top
+ou: Groups
+
+dn: ou=Users,dc=autofin,dc=com,dc=mx
+objectClass: organizationalUnit
+objectClass: top
+ou: Users
+

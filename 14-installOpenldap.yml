@@ -1,4 +1,4 @@
-- hosts: nodo1
+- hosts: nodo4
   vars_files:
     - varsInstallApiEnv.yml
   tasks:
@@ -28,19 +28,16 @@
         owner: usldap
         group: usldap
 
-    - name: Copy file with owner and permissions
+   - name: Install slapd
       become: yes
-      become_user: usldap
-      ansible.builtin.copy:
-        src: /var/www/html/repo/openldap_mov.tar.gz
-        dest: "{{path_openldap}}"
-        owner: usldap
-        group: usldap
+      become_user: root
+      ansible.builtin.apt:
+        name: slapd
+        state: present
 
-    - name: Unzip ldap installation
+   - name: Install ldap-utils
       become: yes
-      become_user: usldap
-      unarchive:
-        src: "{{path_openldap}}/openldap_mov.tar.gz"
-        dest: "{{path_openldap}}"
-        copy: no
+      become_user: root
+      ansible.builtin.apt:
+        name: ldap-utils
+        state: present      

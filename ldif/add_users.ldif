@@ -1,0 +1,4 @@
+dn: ou=Users,dc=autofin,dc=com,dc=mx
+objectClass: organizationalUnit
+objectClass: top
+ou: Users

@@ -1,0 +1,66 @@
+- hosts: nodo4
+  vars_files:
+    - varsInstallApiEnv.yml
+  tasks:
+
+    - name: Update Repo
+      become: yes
+      become_user: root
+      shell: "sudo apt update"
+
+    - name: Install Openjdk
+      become: yes
+      become_user: root
+      ansible.builtin.apt:
+        name: openjdk-11-jre-headless
+        state: present
+
+    - name: Install Nginx
+      become: yes
+      become_user: root
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Install gcc
+      become: yes
+      become_user: root
+      ansible.builtin.apt:
+        name: gcc
+        state: present
+
+    - name: Install make
+      become: yes
+      become_user: root
+      ansible.builtin.apt:
+        name: make
+        state: present        
+
+    - name: Add key repo elasticsearch
+      become: yes
+      become_user: root
+      shell: "curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -"
+
+    - name: Add key repo elasticsearch
+      become: yes
+      become_user: root
+      shell: echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+
+    - name: Update Repo
+      become: yes
+      become_user: root
+      shell: "sudo apt update"
+
+    - name: Install elasticsearch
+      become: yes
+      become_user: root
+      apt:
+        name: elasticsearch
+
+    - name: Start elasticsearc service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd:
+        state: started
+        name: elasticsearch
+        enabled: true

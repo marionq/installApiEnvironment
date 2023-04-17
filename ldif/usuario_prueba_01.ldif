@@ -1,0 +1,21 @@
+dn: cn=mnepomuceno,ou=Users,dc=autofin,dc=com,dc=mx
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: mnepomuceno
+sn: Nepomuceno Quintanar
+displayName: Mario Nepomuceno Quintanar
+facsimileTelephoneNumber: 5563748950
+givenName: Mario
+l: CIUDAD DE MEXICO
+mail: mnepomuceno@bam.com.mx
+o: Banco Autofin
+postalAddress: Extremadura Insurgentes
+postalCode: 03740
+postOfficeBox: BENITO JUAREZ
+st: NEQM870315
+street: Av. Insurgentes Sur No.1235
+telephoneNumber: 5563778495
+uid: mnepomuceno
+userPassword:: Y2FtYmlhcjIwMjE=

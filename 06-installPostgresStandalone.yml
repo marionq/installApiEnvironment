@@ -15,6 +15,13 @@
       args:
         warn: false
 
+    - name: Yum repolist
+      become: yes
+      become_user: root
+      shell: "yum repolist"
+      args:
+        warn: false
+
     - name: Install Postgresql 13
       become: yes
       become_user: root

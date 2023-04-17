@@ -10,6 +10,12 @@
         name: appmgr
         state: present
 
+    - name: Install Openjdk
+      become: yes
+      become_user: root
+      ansible.builtin.yum:
+       name: java-11-openjdk
+
     - name: Add jvmapps user
       become: yes
       become_user: root
